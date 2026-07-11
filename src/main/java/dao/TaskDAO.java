@@ -1,10 +1,13 @@
 package dao;
 
-import model.Task;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
+import model.Task;
 
 public class TaskDAO {
 
@@ -27,29 +30,29 @@ public class TaskDAO {
     }
 
     public void update(Task t) throws SQLException {
-        String sql = "UPDATE task SET user_id=?, title=?, category=?, priority=?, status=?, due_date=?, description=? " +
-                "WHERE task_id=?";
+        String sql = "UPDATE task SET task_id=?, user_id=?, title=?, category=?, priority=?, status=?, due_date=?, description=? " +
+                "WHERE id=?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, t.getUserId());
-            ps.setString(2, t.getTitle());
-            ps.setString(3, t.getCategory());
-            ps.setString(4, t.getPriority());
-            ps.setString(5, t.getStatus());
-            ps.setString(6, t.getDueDate());
-            ps.setString(7, t.getDescription());
-            ps.setString(8, t.getTaskId());
+            ps.setString(1, t.getTaskId());
+            ps.setInt(2, t.getUserId());
+            ps.setString(3, t.getTitle());
+            ps.setString(4, t.getCategory());
+            ps.setString(5, t.getPriority());
+            ps.setString(6, t.getStatus());
+            ps.setString(7, t.getDueDate());
+            ps.setString(8, t.getDescription());
+            ps.setInt(9, t.getId());
             ps.executeUpdate();
         }
     }
 
-    public void delete(String taskId) throws SQLException {
-        try (PreparedStatement ps = conn.prepareStatement("DELETE FROM task WHERE task_id=?")) {
-            ps.setString(1, taskId);
+    public void delete(int id) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement("DELETE FROM task WHERE id=?")) {
+            ps.setInt(1, id);
             ps.executeUpdate();
         }
     }
 
-    /** Pass a userId to scope to one user's tasks, or null for all tasks (admin view, includes owner username). */
     public List<Task> getAll(Integer userId) throws SQLException {
         List<Task> list = new ArrayList<>();
         String sql = userId == null
@@ -66,7 +69,6 @@ public class TaskDAO {
         return list;
     }
 
-    /** Pass a userId to scope the search to one user, or null to search across all users (admin view). */
     public List<Task> search(String key, Integer userId) throws SQLException {
         List<Task> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
@@ -89,10 +91,11 @@ public class TaskDAO {
         return list;
     }
 
-    public boolean exists(String taskId) throws SQLException {
-        String sql = "SELECT 1 FROM task WHERE task_id = ?";
+    public boolean exists(String taskId, int userId) throws SQLException {
+        String sql = "SELECT 1 FROM task WHERE task_id = ? AND user_id = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, taskId);
+            ps.setInt(2, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }

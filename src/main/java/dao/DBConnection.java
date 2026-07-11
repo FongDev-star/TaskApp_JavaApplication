@@ -1,13 +1,13 @@
 package dao;
 
-import util.PasswordUtil;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import util.PasswordUtil;
 
 public class DBConnection {
     private static Connection conn;
@@ -41,15 +41,16 @@ public class DBConnection {
 
         String task = "CREATE TABLE IF NOT EXISTS task (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                "task_id TEXT UNIQUE," +
+                "task_id TEXT," +
                 "user_id INTEGER NOT NULL," +
                 "title TEXT," +
                 "category TEXT," +
                 "priority TEXT," +
                 "status TEXT," +
-                "due_date DATE()," +
+                "due_date TEXT," +
                 "description TEXT," +
-                "FOREIGN KEY(user_id) REFERENCES users(id)" +
+                "FOREIGN KEY(user_id) REFERENCES users(id)," +
+                "UNIQUE(user_id, task_id)" +
                 ")";
 
         try (Statement st = connection.createStatement()) {
@@ -57,13 +58,11 @@ public class DBConnection {
             st.execute(task);
         }
     }
-
-    // Creates a default admin/admin123 account the first time the app
-    // runs against an empty database, so there's always a way in.
+    
     private static void seedDefaultAdmin(Connection connection) throws SQLException {
         try (Statement st = connection.createStatement();
              ResultSet rs = st.executeQuery("SELECT COUNT(*) AS c FROM users")) {
-            if (rs.next() && rs.getInt("c") == 0) {
+            if (rs.next() && rs.getInt    ("c") == 0) {
                 String salt = PasswordUtil.generateSalt();
                 String hash = PasswordUtil.hash(DEFAULT_ADMIN_PASSWORD, salt);
                 String sql = "INSERT INTO users (username, password_hash, salt, role) VALUES (?, ?, ?, 'ADMIN')";

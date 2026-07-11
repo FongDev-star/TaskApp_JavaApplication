@@ -54,7 +54,7 @@ public class TaskPanel extends JPanel {
     private String[] columns;
     private int colId, colTaskId, colOwner, colTitle, colCategory, colPriority, colStatus, colDueDate;
     private Map<String, Integer> usernameToId = new LinkedHashMap<>();
-
+    private Integer selectedRecordId; 
     public TaskPanel(int currentUserId, boolean isAdmin) {
         this.currentUserId = currentUserId;
         this.isAdmin = isAdmin;
@@ -260,6 +260,7 @@ public class TaskPanel extends JPanel {
         if (viewRow == -1) return;
         int row = table.convertRowIndexToModel(viewRow);
 
+        selectedRecordId = (Integer) model.getValueAt(row, colId);
         txtId.setText(model.getValueAt(row, colTaskId).toString());
         txtTitle.setText(model.getValueAt(row, colTitle).toString());
         cbCategory.setSelectedItem(model.getValueAt(row, colCategory).toString());
@@ -270,6 +271,15 @@ public class TaskPanel extends JPanel {
             cbOwner.setSelectedItem(model.getValueAt(row, colOwner).toString());
         }
         txtId.setEditable(false); // lock ID while an existing row is selected
+    }
+
+    // Resolves which user_id a task in the form should belong to: the
+    // selected Owner (admin mode) or the logged-in user (user mode).
+    private int resolveTargetUserId() {
+        if (isAdmin && cbOwner.getSelectedItem() != null) {
+            return usernameToId.getOrDefault(cbOwner.getSelectedItem().toString(), currentUserId);
+        }
+        return currentUserId;
     }
 
     private void onAdd() {
@@ -283,8 +293,9 @@ public class TaskPanel extends JPanel {
         }
         try {
             String id = txtId.getText().trim();
-            if (dao.exists(id)) {
-                showError("A task with ID \"" + id + "\" already exists. Use Update instead, or pick a new ID.");
+            int targetUserId = resolveTargetUserId();
+            if (dao.exists(id, targetUserId)) {
+                showError("This owner already has a task with ID \"" + id + "\". Use Update instead, or pick a new ID.");
                 return;
             }
             dao.insert(buildTaskFromForm());
@@ -297,7 +308,7 @@ public class TaskPanel extends JPanel {
     }
 
     private void onUpdate() {
-        if (Validator.isEmpty(txtId.getText())) {
+        if (selectedRecordId == null) {
             showError("Select a task from the table to update!");
             return;
         }
@@ -306,7 +317,9 @@ public class TaskPanel extends JPanel {
             return;
         }
         try {
-            dao.update(buildTaskFromForm());
+            Task t = buildTaskFromForm();
+            t.setId(selectedRecordId);
+            dao.update(t);
             loadTable();
             clearForm();
             setStatus("Task updated successfully.");
@@ -316,17 +329,17 @@ public class TaskPanel extends JPanel {
     }
 
     private void onDelete() {
-        String id = txtId.getText().trim();
-        if (Validator.isEmpty(id)) {
+        if (selectedRecordId == null) {
             showError("Select a task first!");
             return;
         }
+        String id = txtId.getText().trim();
         int confirm = JOptionPane.showConfirmDialog(this,
                 "Delete task \"" + id + "\"?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
         if (confirm != JOptionPane.YES_OPTION) return;
 
         try {
-            dao.delete(id);
+            dao.delete(selectedRecordId);
             loadTable();
             clearForm();
             setStatus("Task deleted.");
@@ -355,15 +368,12 @@ public class TaskPanel extends JPanel {
         t.setStatus((String) cbStatus.getSelectedItem());
         t.setDueDate(txtDueDate.getText().trim());
         t.setDescription(txtDescription.getText().trim());
-        if (isAdmin && cbOwner.getSelectedItem() != null) {
-            t.setUserId(usernameToId.getOrDefault(cbOwner.getSelectedItem().toString(), currentUserId));
-        } else {
-            t.setUserId(currentUserId);
-        }
+        t.setUserId(resolveTargetUserId());
         return t;
     }
 
     private void clearForm() {
+        selectedRecordId = null;
         txtId.setText("");
         txtId.setEditable(true);
         txtTitle.setText("");
