@@ -29,7 +29,7 @@ import model.User;
 public class UserManagementPanel extends JPanel {
 
     private final UserDAO userDAO = new UserDAO();
-    private final User currentUser; // the logged-in admin; used to block self-delete/self-demote
+    private final User currentUser;
 
     private JTable table;
     private DefaultTableModel model;

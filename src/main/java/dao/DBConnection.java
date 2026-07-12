@@ -62,7 +62,7 @@ public class DBConnection {
     private static void seedDefaultAdmin(Connection connection) throws SQLException {
         try (Statement st = connection.createStatement();
              ResultSet rs = st.executeQuery("SELECT COUNT(*) AS c FROM users")) {
-            if (rs.next() && rs.getInt    ("c") == 0) {
+            if (rs.next() && rs.getInt("c") == 0) {
                 String salt = PasswordUtil.generateSalt();
                 String hash = PasswordUtil.hash(DEFAULT_ADMIN_PASSWORD, salt);
                 String sql = "INSERT INTO users (username, password_hash, salt, role) VALUES (?, ?, ?, 'ADMIN')";

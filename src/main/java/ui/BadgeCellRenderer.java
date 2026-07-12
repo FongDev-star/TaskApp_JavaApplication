@@ -1,15 +1,20 @@
 package ui;
 
-import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.util.function.Function;
 
-/**
- * Renders a table cell as a rounded, colored "badge" - e.g. a red pill
- * for High priority, a green pill for Completed status - instead of
- * plain text, so priority/status are readable at a glance.
- */
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.JTable;
+import javax.swing.SwingConstants;
+import javax.swing.table.DefaultTableCellRenderer;
+
 public class BadgeCellRenderer extends DefaultTableCellRenderer {
 
     private final Function<String, Color> colorFn;
