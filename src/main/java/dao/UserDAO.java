@@ -21,7 +21,6 @@ public class UserDAO {
         }
     }
 
-    /** Registers a new account with the USER role. Returns false if the username is taken. */
     public boolean register(String username, String plainPassword) throws SQLException {
         if (existsByUsername(username)) {
             return false;
@@ -39,7 +38,6 @@ public class UserDAO {
         return true;
     }
 
-    /** Creates a user with an explicit role. Used by the admin dashboard. Returns false if taken. */
     public boolean createUser(String username, String plainPassword, String role) throws SQLException {
         if (existsByUsername(username)) {
             return false;
@@ -57,7 +55,6 @@ public class UserDAO {
         return true;
     }
 
-    /** Returns the authenticated User, or null if the username/password doesn't match. */
     public User authenticate(String username, String plainPassword) throws SQLException {
         String sql = "SELECT * FROM users WHERE username = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -100,7 +97,6 @@ public class UserDAO {
         }
     }
 
-    /** Deletes the user and cascades to their tasks (SQLite doesn't enforce FKs by default). */
     public void delete(int userId) throws SQLException {
         try (PreparedStatement ps1 = conn.prepareStatement("DELETE FROM task WHERE user_id=?")) {
             ps1.setInt(1, userId);
